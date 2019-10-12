@@ -1,0 +1,51 @@
+---
+title: "resolucion_rrhh_left"
+author: "Alvarez Ignacio Nicolas"
+date: "30/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## R Markdown
+
+```{r Librerías}
+library("dplyr")
+library("corrplot")
+library("fastDummies")
+library("ggplot2")
+library("rpart")
+library("rpart.plot")
+library("caret")
+library("caTools")
+library("randomForest")
+library("class")
+```
+
+```{r Directorio de Trabajo}
+# Establecimiento del directorio de trabajo
+setwd("~/R - WORKSPACE/TP3/")
+```
+
+```{r Carga de Datos}
+# Carga de datos
+raw_data <- read.csv("recursos_humanos.csv")
+```
+
+```{r Visualización Dataset}
+#Visualización del dataset crudo
+#raw_data
+```
+
+```{r Sumario del Dataset}
+# Realización de un sumario de los datos
+summary(raw_data)
+```
+
+```{r Estructura del Dataset}
+str(raw_data)
+```

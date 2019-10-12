@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569898310409.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1408277067",
+    "id" : "2EC3EABD",
+    "lastKnownWriteTime" : 1569961602,
+    "last_content_update" : 1569961602988,
+    "path" : "~/R - WORKSPACE/TP3/rrhh-left.Rmd",
+    "project_path" : "rrhh-left.Rmd",
+    "properties" : {
+        "cursorPosition" : "100,13",
+        "scrollLine" : "90"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

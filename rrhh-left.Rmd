@@ -1,0 +1,227 @@
+---
+title: "Recursos Humanos - Algoritmos de Clasificación"
+author: "**Dr. Pedro Araujo** | Grupo de Investigación en Tecnologías Informáticas Avanzadas | Universidad Tecnológica Nacional - Facultad Regional Tucumán"
+date: "22/9/2019"
+output: html_document
+---
+
+```{r Librerías}
+library("dplyr")
+library("corrplot")
+library("fastDummies")
+library("ggplot2")
+library("rpart")
+library("rpart.plot")
+library("caret")
+library("caTools")
+library("randomForest")
+library("class")
+```
+
+
+```{r Directorio de Trabajo}
+# Establecimiento del directorio de trabajo
+setwd("~/R - WORKSPACE/TP3/")
+```
+
+```{r Carga de Datos}
+# Carga de datos
+raw_data <- read.csv("recursos_humanos.csv")
+```
+
+```{r Sumario del Dataset}
+# Realización de un sumario de los datos
+summary(raw_data)
+```
+
+```{r Estructura del Dataset}
+str(raw_data)
+```
+
+# Análisis Exploratorio de Datos
+
+```{r}
+par(mfrow = c(1,2))
+boxplot(raw_data$satisfaction_level, main = "Satisfaction Level")
+boxplot(raw_data$last_evaluation, main = "Last Evaluation")
+```
+```{r}
+par(mfrow = c(1,2))
+boxplot(raw_data$number_project, main = "Number of Project")
+boxplot(raw_data$average_montly_hours, main = "Average Montly Hours")
+```
+
+```{r}
+par(mfrow = c(1,2))
+boxplot(raw_data$time_spend_company, main = "Time Spend Company")
+```
+
+```{r}
+par(mfrow = c(1,2))
+pie(summary(as.factor(raw_data$Work_accident)), labels = c("Yes","No"), main = "Distribución de 'Work Accident'")
+pie(summary(as.factor(raw_data$left)), labels = c("Yes","No"), main = "Distribución de 'Left'")
+```
+
+```{r}
+par(mfrow = c(1,2))
+pie(summary(as.factor(raw_data$promotion_last_5years)), labels = c("Yes","No"), main = "Distribución de 'Promotion'")
+pie(summary(raw_data$sales), main = "Distribución de 'Sales'")
+
+```
+
+```{r}
+par(mfrow = c(1,2))
+pie(summary(raw_data$salary), main = "Distribución de 'Salary'")
+```
+
+
+
+
+
+
+```{r Encoding}
+# Enconding de la coluna 'Sales'.
+raw_data <- dummy_cols(raw_data, select_columns = c("sales"))
+raw_data$sales = NULL
+
+# Enconding de la columna 'Salary'.
+raw_data <- dummy_cols(raw_data, select_columns = c("salary"))
+raw_data$salary = NULL
+```
+
+```{r}
+# Cálculo de la corralación de todo el dataset.
+data_correlation <- cor(raw_data)
+data_correlation
+
+#Plot de las Correlaciones
+corrplot(data_correlation, method = "square")
+```
+
+```{r}
+ggplot(raw_data, aes(x = satisfaction_level, y = last_evaluation, color = as.factor(left))) + geom_point()
+```
+
+```{r}
+#logit <- glm(formula = left ~ last_evaluation + satisfaction_level, data = raw_data, family = "binomial")
+#summary(logit)
+```
+
+# Modelo: Árboles de Decisión.
+## Evaluación del modelo.
+```{r}
+# Dividimos el dataset en dos
+# El primer conjunto para el entrenamiento que consiste en un 70% de las observaciones.
+data_train_1 <- sample_frac(raw_data, 0.7)
+prop.table(table(data_train_1$left))
+
+# El segundo conjunto es para el testing que consiste en el 30% de las observaciones restantes.
+data_test_1 <- setdiff(raw_data, data_train_1)
+prop.table(table(data_test_1$left))
+
+data_train_1$left <- factor(data_train_1$left)
+data_test_1$left <- factor(data_test_1$left)
+```
+
+
+```{r }
+# Implementación el árbol de decisión.
+tree_1 <- rpart(formula = left ~ ., data = data_train_1)
+tree_1
+```
+
+```{r Plot del Árbol}
+# Graficamos el árbol de decisión
+rpart.plot(tree_1)
+```
+
+```{r}
+# Generamos un vector con los valores predichos
+prediccion <- predict(tree_1, newdata = data_test_1, type = "class")
+
+# Cruzamiento de la predicción con los datos reales del dataset de prueba
+confusionMatrix(prediccion, data_test_1[["left"]])
+```
+
+## Evaluación del Modelo: 2da predicción
+```{r}
+data_train_2 <- sample_frac(raw_data, 0.7)
+prop.table(table(data_train_2$left))
+
+data_test_2 <- setdiff(raw_data, data_train_2)
+prop.table(table(data_test_2$left))
+
+data_train_2$left <- factor(data_train_2$left)
+data_test_2$left <- factor(data_test_2$left)
+
+tree_2 <- rpart(formula = left ~ ., data = data_train_2)
+rpart.plot(tree_2)
+```
+
+```{r}
+prediccion_2 <- predict(tree_2, newdata = data_test_2, type = "class")
+confusionMatrix(prediccion_2,  data_test_2[["left"]])
+```
+## Evaluación del Modelo: 3ra predicción
+```{r}
+data_train_3 <- sample_frac(raw_data, 0.7)
+data_test_3 <- setdiff(raw_data, data_train_3)
+
+data_train_3$left <- factor(data_train_3$left)
+data_test_3$left <- factor(data_test_3$left)
+
+tree_3 <- rpart(formula = left ~ ., data = data_train_3)
+rpart.plot(tree_3)
+```
+
+```{r}
+prediccion_3 <- predict(tree_3, newdata = data_test_3, type = "class")
+confusionMatrix(prediccion_3, data_test_3[["left"]])
+```
+
+# Regresión Logistica
+
+```{r}
+glm.model <- glm(formula = left ~ ., data = data_train_1, family = binomial(logit))
+summary(glm.model)
+```
+
+```{r}
+lgm.predict <- round(predict(glm.model, data_train_1, type = "response"))
+lgm.predict <- factor(lgm.predict)
+confusionMatrix(lgm.predict, data_train_1$left) 
+
+```
+
+
+
+# Random Forest
+
+```{r}
+rf.model <- randomForest(left~., data = data_train_1)
+plot(rf.model, main = "Hola")
+```
+
+```{r}
+rf.prediction <- predict(rf.model, data_test_1, type = "class")
+confusionMatrix(rf.prediction, data_test_1$left)
+```
+
+# LDA
+
+```{r}
+lda.model <- train(left ~., data = data_train_1, method = "lda")
+lda.predict <- predict(lda.model, data_test_1)
+confusionMatrix(lda.predict, data_test_1$left)
+```
+
+## KNN
+
+```{r}
+
+knn.predict <- knn(data_train_1[,-9], data_test_1[,-9], cl = data_train_1[,9], k = 10)
+
+confusionMatrix(knn.predict, data_test_1$left)
+
+```
+

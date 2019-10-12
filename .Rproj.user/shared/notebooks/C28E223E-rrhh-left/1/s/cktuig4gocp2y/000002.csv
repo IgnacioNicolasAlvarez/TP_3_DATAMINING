@@ -1,0 +1,56 @@
+"0","library(""dplyr"")"
+"2","Registered S3 method overwritten by 'dplyr':
+  method           from
+  print.rowwise_df     
+"
+"2","
+Attaching package: ‘dplyr’
+
+"
+"2","The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+"
+"0","library(""corrplot"")"
+"2","corrplot 0.84 loaded
+"
+"0","library(""fastDummies"")"
+"0","library(""ggplot2"")"
+"2","Need help? Try Stackoverflow: https://stackoverflow.com/tags/ggplot2.
+"
+"0","library(""rpart"")"
+"0","library(""rpart.plot"")"
+"0","library(""caret"")"
+"2","Loading required package: lattice
+"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"0","library(""caTools"")"
+"0","library(""randomForest"")"
+"2","randomForest 4.6-14
+"
+"2","Type rfNews() to see new features/changes/bug fixes.
+"
+"2","
+Attaching package: ‘randomForest’
+
+"
+"2","The following object is masked from ‘package:ggplot2’:
+
+    margin
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    combine
+
+"
+"0","library(""class"")"

@@ -1,0 +1,2 @@
+"0","# Carga de datos"
+"0","raw_data <- read.csv(""recursos_humanos.csv"")"

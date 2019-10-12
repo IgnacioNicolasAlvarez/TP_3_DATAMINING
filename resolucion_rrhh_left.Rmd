@@ -1,0 +1,290 @@
+---
+title: "Analisis exploratorio de dataSet 'RR HH - Left'"
+author: "Alvarez Ignacio Nicolas"
+output:
+  html_notebook:
+    df_print: paged
+    fig:height: 4
+    fig:width: 6
+    theme: readable
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+fig:height: 4
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Este ejercicio consiste en realizar un análisis exploratorio sobre un dataset de personal de una determinada empresa con 14999 instancias y 10 atributos. 
+
+El objetivo es conseguir un modelo adecuado con un resultado aceptable interpretando cada paso del razonamiento necesario para llegar al objetivo.
+
+* El atributo objetivo es Left. Indica si un empleado se queda en la empresa o se va.
+
+# Carga de Librerias
+
+```{r Carga de librerías}
+library("dplyr")
+library("corrplot")
+library("fastDummies")
+library("ggplot2")
+library("rpart")
+library("rpart.plot")
+library("caret")
+library("caTools")
+library("randomForest")
+library("class")
+library(mctest) # libreria para calculo de TOF Y VIF
+```
+
+
+```{r Carga de Datos}
+raw_data <- read.csv("recursos_humanos.csv")
+```
+
+```{r Ordenamiento de columnas de raw_data, echo = FALSE}
+raw_data <- raw_data[c("left","salary","satisfaction_level","last_evaluation","number_project","average_montly_hours","time_spend_company","Work_accident","promotion_last_5years","sales")]
+```
+
+
+```{r Visualización Dataset}
+raw_data
+```
+
+```{r Resumen del Dataset}
+summary(raw_data)
+```
+
+```{r Estructura del Dataset}
+str(raw_data)
+```
+
+# Análisis exploratorio 
+
+## Satisfaction Level
+
+```{r Satisfaction Level}
+par(mfrow = c(1,2))
+
+boxplot(raw_data$satisfaction_level, main = "Satisfaction Level")
+
+hist(raw_data$satisfaction_level, main = "Distribucion Satisfaction Level", freq = F)
+lines(density(raw_data$satisfaction_level), col = "red", lwd=2) 
+
+```
+
+## Last Evaluation
+
+```{r Last Evaluation}
+par(mfrow = c(1,2))
+
+boxplot(raw_data$last_evaluation, main = "Last Evaluation")
+hist(raw_data$last_evaluation, main = "Distribucion Last Evaluation", freq = F)
+lines(density(raw_data$last_evaluation), col = "red", lwd=2) 
+
+```
+
+## Number of Project
+
+```{r Number of Project}
+par(mfrow = c(1,2))
+
+boxplot(raw_data$number_project, main = "Number of Project")
+hist(raw_data$number_project, main = "Distribucion Number of Project")
+```
+
+## Average Montly Hours
+
+```{r Average Montly Hours}
+par(mfrow = c(1,2))
+
+boxplot(raw_data$average_montly_hours, main = "Average Montly Hours")
+hist(raw_data$average_montly_hours, main = "Distribucion Average Montly Hours", freq = F)
+lines(density(raw_data$average_montly_hours), col = "red", lwd=2) 
+
+```
+
+## Time Spend Company
+
+```{r Time Spend Company}
+par(mfrow = c(1,2))
+
+boxplot(raw_data$time_spend_company, main = "Time Spend Company")
+hist(raw_data$time_spend_company, main = "Distribucion Time Spend Company")
+```
+
+```{r Color para Histograma Salary, echo=FALSE}
+colorSalary = rainbow(nlevels((as.factor(raw_data$salary))))
+colorYN = rainbow(nlevels((as.factor(raw_data$Work_accident))))
+colorSales = rainbow(nlevels((as.factor(raw_data$sales))))
+```
+
+
+## Salary y Promotion
+
+```{r Salary y Promotion}
+par(mfrow = c(1,2))
+
+barplot(summary(raw_data$salary), main = "Distribución de 'Salary'", 
+        col= colorSalary )
+pie(summary(as.factor(raw_data$promotion_last_5years)), labels = c("Yes","No"), main = "Distribución de 'Promotion'", col=colorYN)
+```
+
+## Work Accident y Distribución de Left
+
+```{r Work Accident y Distribución de Left}
+par(mfrow = c(1,2))
+pie(summary(as.factor(raw_data$Work_accident)), labels = c("Yes","No"), main = "Distribución de 'Work Accident'", col=colorYN)
+pie(summary(as.factor(raw_data$left)), labels = c("Yes","No"), main = "Distribución de 'Left'", col=colorYN)
+```
+
+## Sales
+
+```{r Sales}
+barplot(summary(raw_data$sales), main = "Distribución de 'Sales'", col = colorSales)
+legend("topleft", summary(raw_data$sales), cex = 0.8,  fill = colorSales, legend=levels(raw_data$sales))
+```
+
+```{r Encoding}
+data_set <- raw_data
+data_set <- dummy_cols(data_set, select_columns = c("sales"))
+data_set$sales = NULL
+
+data_set <- dummy_cols(data_set, select_columns = c("salary"))
+data_set$salary = NULL
+```
+
+# Estudio de Variables
+
+## Correlación
+```{r Correlación data_set}
+corrplot(cor(data_set), type="upper", method="pie")
+```
+
+```{r}
+#imcdiag(select(raw_data, -c("left")), raw_data$left)
+```
+## Estudio de Satisfaction_level
+
+### Satisfaction_level vs Last_evaluation
+
+```{r Satisfaction_level vs Last_evaluation}
+ggplot(data_set, 
+       aes(x = satisfaction_level, y = last_evaluation, color = as.factor(left))) + geom_point()
+```
+
+### Satisfaction_level vs Number_projects
+
+```{r Satisfaction_level vs Number_projects}
+ggplot(data_set, 
+       aes(x = number_project, y = satisfaction_level, color = as.factor(left))) + geom_boxplot()
+```
+
+### Satisfaction_level vs Number_projects
+
+```{r Satisfaction_level vs Average Monthly Hours}
+ggplot(data_set, 
+       aes(x = average_montly_hours, y = satisfaction_level, color = as.factor(left))) + geom_boxplot()
+```
+
+## Satisfaction_level vs Time_Spend_in_Company(años)
+```{r}
+ggplot(data_set, 
+       aes(x = time_spend_company, y = satisfaction_level, color = as.factor(left))) + geom_boxplot()
+```
+
+# Modelo 1°
+
+## Conjunto de datos de Entrenamiento y Prueba
+```{r Datos de Entrenamiento y de Test}
+
+data_train_1 <- sample_frac(raw_data, 0.7)
+prop.table(table(data_train_1$left))
+
+data_test_1 <- setdiff(raw_data, data_train_1)
+prop.table(table(data_test_1$left))
+
+data_train_1$left <- factor(data_train_1$left)
+data_test_1$left <- factor(data_test_1$left)
+```
+
+## Modelo de Arbol de Decision
+### Desarrollo del modelo.
+
+```{r Arbol de decision}
+tree_1 <- rpart(formula = left ~ ., data = data_train_1)
+```
+
+```{r Plot del Árbol}
+rpart.plot(tree_1)
+```
+
+```{r Prediccion del Arbol}
+prediccion <- predict(tree_1, newdata = data_test_1, type = "class")
+```
+
+```{r Matriz de Confucion del Arbol}
+confusionMatrix(prediccion, data_test_1[["left"]])
+```
+
+## Evaluación del Modelo: 2da predicción
+```{r}
+data_train_2 <- sample_frac(raw_data, 0.7)
+prop.table(table(data_train_2$left))
+
+data_test_2 <- setdiff(raw_data, data_train_2)
+prop.table(table(data_test_2$left))
+
+data_train_2$left <- factor(data_train_2$left)
+data_test_2$left <- factor(data_test_2$left)
+
+tree_2 <- rpart(formula = left ~ ., data = data_train_2)
+rpart.plot(tree_2)
+
+prediccion_2 <- predict(tree_2, newdata = data_test_2, type = "class")
+confusionMatrix(prediccion_2,  data_test_2[["left"]])
+```
+
+# REPETIR 100 VECES
+
+# Regresión Logistica
+
+```{r}
+glm.model <- glm(formula = left ~ ., data = data_train_1, family = binomial(logit))
+summary(glm.model)
+```
+
+```{r}
+lgm.predict <- round(predict(glm.model, data_train_1, type = "response"))
+lgm.predict <- factor(lgm.predict)
+confusionMatrix(lgm.predict, data_train_1$left) 
+```
+
+# Random Forest
+
+```{r}
+rf.model <- randomForest(left~., data = data_train_1)
+plot(rf.model, main = "Hola")
+```
+
+```{r}
+rf.prediction <- predict(rf.model, data_test_1, type = "class")
+confusionMatrix(rf.prediction, data_test_1$left)
+```
+
+# LDA
+
+```{r}
+lda.model <- train(left ~., data = data_train_1, method = "lda")
+lda.predict <- predict(lda.model, data_test_1)
+confusionMatrix(lda.predict, data_test_1$left)
+```
+
+
+# Limpieza de datos
+
+

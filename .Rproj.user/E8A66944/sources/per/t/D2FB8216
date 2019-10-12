@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569898459814.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3551413681",
+    "id" : "D2FB8216",
+    "lastKnownWriteTime" : 1569898596,
+    "last_content_update" : 1569898596510,
+    "path" : "~/R - WORKSPACE/TP3/resolucion_rrhh_left.Rmd",
+    "project_path" : "resolucion_rrhh_left.Rmd",
+    "properties" : {
+        "cursorPosition" : "50,3",
+        "last_setup_crc32" : "",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

@@ -25,9 +25,9 @@ El objetivo es conseguir un modelo adecuado con un resultado aceptable interpret
 
 * El atributo objetivo es Left. Indica si un empleado se queda en la empresa o se va.
 
-# Carga de Librerias
+# 1.Carga de Librerias
 
-```{r Carga de librerías}
+```{r Carga de librerías, echo=FALSE}
 library("dplyr")
 library("corrplot")
 library("fastDummies")
@@ -38,34 +38,50 @@ library("caret")
 library("caTools")
 library("randomForest")
 library("class")
-library(mctest) # libreria para calculo de TOF Y VIF
+library(leaps)
+library(mctest) 
 ```
 
+# 2.Carga de Datos
 
-```{r Carga de Datos}
+```{r Carga de Datos , echo=FALSE}
 raw_data <- read.csv("recursos_humanos.csv")
 ```
+
+# 3.Ordenamiento de Datos
 
 ```{r Ordenamiento de columnas de raw_data, echo = FALSE}
 raw_data <- raw_data[c("left","salary","satisfaction_level","last_evaluation","number_project","average_montly_hours","time_spend_company","Work_accident","promotion_last_5years","sales")]
 ```
 
+# 4.Visualizacion de los datos
 
 ```{r Visualización Dataset}
 raw_data
 ```
 
+# 5.Resumen de los datos
 ```{r Resumen del Dataset}
 summary(raw_data)
 ```
 
+# 6.Estructura de los datos
 ```{r Estructura del Dataset}
 str(raw_data)
 ```
 
-# Análisis exploratorio 
+# 7.Análisis exploratorio 
 
-## Satisfaction Level
+## 7,1.Revisión de datos nulos
+
+```{r Revisión de datos nulos}
+CantidadNulos <- sapply(raw_data, function(x) sum(is.na(x)))
+data.frame(CantidadNulos)
+```
+* No se presentan instancias nulas.    
+* No se presentan instancias duplicadas.    
+
+## 7,2.Satisfaction Level
 
 ```{r Satisfaction Level}
 par(mfrow = c(1,2))
@@ -76,8 +92,9 @@ hist(raw_data$satisfaction_level, main = "Distribucion Satisfaction Level", freq
 lines(density(raw_data$satisfaction_level), col = "red", lwd=2) 
 
 ```
+* Se observa que la mayor parte de las instancias poseen un satisfaction_level entre (0.4 y 1.0).     
 
-## Last Evaluation
+##  7,3.Last Evaluation
 
 ```{r Last Evaluation}
 par(mfrow = c(1,2))
@@ -88,7 +105,9 @@ lines(density(raw_data$last_evaluation), col = "red", lwd=2)
 
 ```
 
-## Number of Project
+* Se observa que la mayor parte de las instancias poseen un valor de last_evaluation entre (0.45 y 1.0), con una mediana alrrededor de 0.7.        
+
+## 7,4.Number of Project
 
 ```{r Number of Project}
 par(mfrow = c(1,2))
@@ -97,7 +116,9 @@ boxplot(raw_data$number_project, main = "Number of Project")
 hist(raw_data$number_project, main = "Distribucion Number of Project")
 ```
 
-## Average Montly Hours
+* Se observa que la mayor parte de las instancias poseen un valor de number_project entre (2, 5), con una mediana alrrededor de 4.    
+
+## 7,5.Average Montly Hours
 
 ```{r Average Montly Hours}
 par(mfrow = c(1,2))
@@ -108,7 +129,9 @@ lines(density(raw_data$average_montly_hours), col = "red", lwd=2)
 
 ```
 
-## Time Spend Company
+* Se observa que la mayor parte de las instancias poseen un valor de average_montly_hours entre (125, 275), con una mediana alrrededor de 200.
+
+## 7,6.Time Spend Company
 
 ```{r Time Spend Company}
 par(mfrow = c(1,2))
@@ -117,89 +140,114 @@ boxplot(raw_data$time_spend_company, main = "Time Spend Company")
 hist(raw_data$time_spend_company, main = "Distribucion Time Spend Company")
 ```
 
-```{r Color para Histograma Salary, echo=FALSE}
+* Se observa que la mayor parte de las instancias poseen un valor de time_spend_company entre (2, 6), con una mediana alrrededor de 3, y un valor minimo de 2. Se presentan valores atipicos para valores superiores a 5.
+
+## 7,7.Salary
+
+```{r Color para Histograma Salary}
 colorSalary = rainbow(nlevels((as.factor(raw_data$salary))))
 colorYN = rainbow(nlevels((as.factor(raw_data$Work_accident))))
 colorSales = rainbow(nlevels((as.factor(raw_data$sales))))
 ```
 
 
-## Salary y Promotion
+## 7,8.Salary y Promotion
 
 ```{r Salary y Promotion}
 par(mfrow = c(1,2))
 
 barplot(summary(raw_data$salary), main = "Distribución de 'Salary'", 
         col= colorSalary )
-pie(summary(as.factor(raw_data$promotion_last_5years)), labels = c("Yes","No"), main = "Distribución de 'Promotion'", col=colorYN)
+pie(summary(as.factor(raw_data$promotion_last_5years)), labels = c("Si","No"), main = "Distribución de 'Promotion'", col=colorYN)
 ```
 
-## Work Accident y Distribución de Left
+* Se observa que la mayor parte de las instancias poseen un valor de salary "low" y "medium".     
+* Se observa que la mayoria de las instancias presentan un valor de Promotion "Si".    
+
+## 7,9.Work Accident y Distribución de Left
 
 ```{r Work Accident y Distribución de Left}
 par(mfrow = c(1,2))
-pie(summary(as.factor(raw_data$Work_accident)), labels = c("Yes","No"), main = "Distribución de 'Work Accident'", col=colorYN)
-pie(summary(as.factor(raw_data$left)), labels = c("Yes","No"), main = "Distribución de 'Left'", col=colorYN)
+pie(summary(as.factor(raw_data$Work_accident)), labels = c("Si","No"), main = "Distribución de 'Work Accident'", col=colorYN)
+pie(summary(as.factor(raw_data$left)), labels = c("Si","No"), main = "Distribución de 'Left'", col=colorYN)
 ```
 
-## Sales
+* Se observa que la mayoria de las instancias presentan un valor de Work Accident "Si".
+* Se observa que aproximadamente un 75% de las instancias presentan un valor de Left"Si".    
+
+## 7,10.Sales
 
 ```{r Sales}
 barplot(summary(raw_data$sales), main = "Distribución de 'Sales'", col = colorSales)
 legend("topleft", summary(raw_data$sales), cex = 0.8,  fill = colorSales, legend=levels(raw_data$sales))
 ```
 
-```{r Encoding}
-data_set <- raw_data
-data_set <- dummy_cols(data_set, select_columns = c("sales"))
-data_set$sales = NULL
 
-data_set <- dummy_cols(data_set, select_columns = c("salary"))
-data_set$salary = NULL
+# 8.Estudio de Variables
+
+## 8,1.Correlación raw_data
+
+```{r Correlación raw_data}
+corrplot(cor(select(raw_data, -c("salary", "sales"))), type="upper", method="pie")
+cor(select(raw_data, -c("salary", "sales")))
 ```
 
-# Estudio de Variables
+* Aparentemente el atributo objetivo **left**  se encuentra relacionado principalmente con los atributos **satisfaction_level, time_spend_company, y work_accident**.    
 
-## Correlación
-```{r Correlación data_set}
-corrplot(cor(data_set), type="upper", method="pie")
+## 8,2.Colinealidad raw_data
+
+```{r Colinealidad raw_data}
+imcdiag(select(raw_data, -c("left","salary", "sales")), raw_data$left)
 ```
 
-```{r}
-#imcdiag(select(raw_data, -c("left")), raw_data$left)
-```
-## Estudio de Satisfaction_level
+* Ss posible que exista colinealidad vinculado con los atributos **last_evaluation, number_project, average_montly_hours **.   
 
-### Satisfaction_level vs Last_evaluation
+## 8,3.Estudio de Satisfaction_level
+
+### 8,3,1.Satisfaction_level vs Last_evaluation
 
 ```{r Satisfaction_level vs Last_evaluation}
-ggplot(data_set, 
+ggplot(raw_data, 
        aes(x = satisfaction_level, y = last_evaluation, color = as.factor(left))) + geom_point()
 ```
 
-### Satisfaction_level vs Number_projects
+* Mediante este scatterplot se ve la relacion entre dos variables continuas: **satisfaction_level y last_evaluation**.    
+* El estudio se realizará particularmente sobre las instancias cuyo valor de left sea 0, es decir sobre aquellos empleados que conserva la empresa. Se distingue para esto la poblacion cuyo satisfaction_level **es mayor a 0.50** y cuyo valor de last_evaluation **es mayor a 0.45**.    
+* Cabe considerar que aquellas concentraciones de puntos con valor de left 1 (figura [(0.4, 0.45),(0.48, 0.45),(0.4, 0.58),(0.48, 0.58)] y figura [(0.1, 0.75),(0.15, 0.75),(0.1, 0.95),(0.15, 0.95)]) pueden corresponder a casos de individuos muy capacitados pero poco satisfechos o individuos poco satisfechos y con un bajo desempeño en su ultima evaluacion.      
+
+
+### 8,3,2.Satisfaction_level vs Number_projects
 
 ```{r Satisfaction_level vs Number_projects}
-ggplot(data_set, 
+ggplot(raw_data, 
        aes(x = number_project, y = satisfaction_level, color = as.factor(left))) + geom_boxplot()
 ```
 
-### Satisfaction_level vs Number_projects
+* Se observa que aquellas instancias con una cantidad de proyectos superiores a 4  y con niveles de conformidad entre 0.10 y 0.70, presentan la mayoria de las salidas de la empresa.    
+
+* Se observa que aquellas instancias con una cantidad de proyectos menores a 4, presentan una mayoria con niveles de satisfaccion entre 0.50 y 0.80.   
+
+### 8,3,3.Satisfaction_level vs Number_projects
 
 ```{r Satisfaction_level vs Average Monthly Hours}
-ggplot(data_set, 
+ggplot(raw_data, 
        aes(x = average_montly_hours, y = satisfaction_level, color = as.factor(left))) + geom_boxplot()
 ```
+* Se observa que la mayoria de los indiviuos que dejan la empresa mantenian una media de horas mensuales superiores a las 200 horas, posiblemente se relacione con el alto numero de proyectos en los que participaban.   
 
-## Satisfaction_level vs Time_Spend_in_Company(años)
+
+### 8,3,4.Satisfaction_level vs Time_Spend_in_Company(años)
 ```{r}
-ggplot(data_set, 
+ggplot(raw_data, 
        aes(x = time_spend_company, y = satisfaction_level, color = as.factor(left))) + geom_boxplot()
 ```
 
-# Modelo 1°
+* La mayoria de los empleados que abandonaron la empresa, estuvieron menos de 5 años en la compañia, y mantuvieron un nivel de satisfaccion con una mediana de alrrededor de 0.45.
 
-## Conjunto de datos de Entrenamiento y Prueba
+# 9.Modelos con Raw Data
+
+## 9,1.Conjunto de datos de Entrenamiento y Prueba
+
 ```{r Datos de Entrenamiento y de Test}
 
 data_train_1 <- sample_frac(raw_data, 0.7)
@@ -212,46 +260,19 @@ data_train_1$left <- factor(data_train_1$left)
 data_test_1$left <- factor(data_test_1$left)
 ```
 
-## Modelo de Arbol de Decision
-### Desarrollo del modelo.
+* Separacion del raw_data original en: **70% para entrenamiento, 30% para tests**.   
+
+## 9,2.Modelo de Arbol de Decision
 
 ```{r Arbol de decision}
 tree_1 <- rpart(formula = left ~ ., data = data_train_1)
-```
-
-```{r Plot del Árbol}
 rpart.plot(tree_1)
-```
 
-```{r Prediccion del Arbol}
 prediccion <- predict(tree_1, newdata = data_test_1, type = "class")
-```
-
-```{r Matriz de Confucion del Arbol}
 confusionMatrix(prediccion, data_test_1[["left"]])
 ```
 
-## Evaluación del Modelo: 2da predicción
-```{r}
-data_train_2 <- sample_frac(raw_data, 0.7)
-prop.table(table(data_train_2$left))
-
-data_test_2 <- setdiff(raw_data, data_train_2)
-prop.table(table(data_test_2$left))
-
-data_train_2$left <- factor(data_train_2$left)
-data_test_2$left <- factor(data_test_2$left)
-
-tree_2 <- rpart(formula = left ~ ., data = data_train_2)
-rpart.plot(tree_2)
-
-prediccion_2 <- predict(tree_2, newdata = data_test_2, type = "class")
-confusionMatrix(prediccion_2,  data_test_2[["left"]])
-```
-
-# REPETIR 100 VECES
-
-# Regresión Logistica
+## 9,3.Regresión Logistica
 
 ```{r}
 glm.model <- glm(formula = left ~ ., data = data_train_1, family = binomial(logit))
@@ -259,16 +280,15 @@ summary(glm.model)
 ```
 
 ```{r}
-lgm.predict <- round(predict(glm.model, data_train_1, type = "response"))
+lgm.predict <- round(predict(glm.model, data_test_1, type = "response"))
 lgm.predict <- factor(lgm.predict)
-confusionMatrix(lgm.predict, data_train_1$left) 
+confusionMatrix(lgm.predict, data_test_1$left) 
 ```
 
-# Random Forest
+## 9,4.Random Forest
 
 ```{r}
 rf.model <- randomForest(left~., data = data_train_1)
-plot(rf.model, main = "Hola")
 ```
 
 ```{r}
@@ -276,7 +296,7 @@ rf.prediction <- predict(rf.model, data_test_1, type = "class")
 confusionMatrix(rf.prediction, data_test_1$left)
 ```
 
-# LDA
+## 9,5.LDA
 
 ```{r}
 lda.model <- train(left ~., data = data_train_1, method = "lda")
@@ -284,7 +304,262 @@ lda.predict <- predict(lda.model, data_test_1)
 confusionMatrix(lda.predict, data_test_1$left)
 ```
 
+A fin de poder evaluar los modelos se utilizan los siguientes valores resultado:     
 
-# Limpieza de datos
+* Matriz de Confusion: Matriz que permite comparar los valores obtenidos durante la prueba y entrenamiento en las predicciones, los valores que se muestran corresponden a: **verdaderos positivo** (es la cantidad de positivos que fueron clasificados correctamente como positivos por el modelo), **verdaderos negativos** (es la cantidad de negativos que fueron clasificados correctamente como negativos por el modelo), **falsos negativos** (es la cantidad de positivos que fueron clasificados incorrectamente como negativos) y
+**falsos positivos** (es la cantidad de negativos que fueron clasificados incorrectamente como positivos).     
 
 
+## 9,6.Iteración sobre los modelos
+
+```{r Iteracion sobre modelo tree}
+results_tree <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_1 <- sample_frac(raw_data, 0.7)
+   prop.table(table(data_train_1$left))
+  
+   data_test_1 <- setdiff(raw_data, data_train_1)
+   prop.table(table(data_test_1$left))
+  
+   data_train_1$left <- factor(data_train_1$left)
+   data_test_1$left <- factor(data_test_1$left)
+   
+   tree_1 <- rpart(formula = left ~ ., data = data_train_1)
+   prediccion <- predict(tree_1, newdata = data_test_1, type = "class")
+   res_tree <- confusionMatrix(prediccion, data_test_1[["left"]])
+   results_tree[i,] <- res_tree$overall["Accuracy"]
+}
+```
+
+* Se obtiene la media de 10 observaciones del modelo para una posterior comparación del Accuracy del Modelo.    
+
+```{r Iteracion sobre modelo Logistico}
+results_log <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_1 <- sample_frac(raw_data, 0.7)
+   prop.table(table(data_train_1$left))
+  
+   data_test_1 <- setdiff(raw_data, data_train_1)
+   prop.table(table(data_test_1$left))
+  
+   data_train_1$left <- factor(data_train_1$left)
+   data_test_1$left <- factor(data_test_1$left)
+   
+   glm.model <- glm(formula = left ~ ., data = data_train_1, family = "binomial")
+   lgm.predict <- round(predict(glm.model, data_test_1, type = "response"))
+   lgm.predict <- factor(lgm.predict)
+   res_lgm = confusionMatrix(lgm.predict, data_test_1$left) 
+   results_log[i,] <- res_lgm$overall["Accuracy"]
+}
+```
+
+* Se obtiene la media de 10 observaciones del modelo para una posterior comparación del Accuracy del Modelo.    
+
+```{r Iteracion sobre modelo Random Forest}
+results_rf <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_1 <- sample_frac(raw_data, 0.7)
+   prop.table(table(data_train_1$left))
+  
+   data_test_1 <- setdiff(raw_data, data_train_1)
+   prop.table(table(data_test_1$left))
+  
+   data_train_1$left <- factor(data_train_1$left)
+   data_test_1$left <- factor(data_test_1$left)
+   
+   rf.model <- randomForest(left~., data = data_train_1)
+   rf.prediction <- predict(rf.model, data_test_1, type = "class")
+   res_random = confusionMatrix(rf.prediction, data_test_1$left)
+   results_rf[i,] <- res_random$overall["Accuracy"]
+}
+```
+
+* Se obtiene la media de 10 observaciones del modelo para una posterior comparación del Accuracy del Modelo.    
+
+```{r Iteracion sobre modelo LDA}
+results_lda <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_1 <- sample_frac(raw_data, 0.7)
+   prop.table(table(data_train_1$left))
+  
+   data_test_1 <- setdiff(raw_data, data_train_1)
+   prop.table(table(data_test_1$left))
+  
+   data_train_1$left <- factor(data_train_1$left)
+   data_test_1$left <- factor(data_test_1$left)
+   
+   lda.model <- train(left ~., data = data_train_1, method = "lda")
+   lda.predict <- predict(lda.model, data_test_1)
+   res_lda = confusionMatrix(lda.predict, data_test_1$left)
+   
+   results_lda[i,] <- res_lda$overall["Accuracy"]
+}
+```
+
+| Arbol de Decision | Regresion Logistica | Random Forest | LDA |
+|:-:|:-:|:-:|:-:|
+|`r mean(results_tree)`|`r mean(results_log)`|`r mean(results_rf)`|`r mean(results_lda)`|
+
+
+# 10.Limpieza de datos
+
+```{r Encoding}
+data_set <- raw_data
+data_set <- dummy_cols(data_set, select_columns = c("sales"))
+data_set$sales = NULL
+
+data_set <- dummy_cols(data_set, select_columns = c("salary"))
+data_set$salary = NULL
+```
+
+* Dada la naturaleza de los atributos sales y salary (factores char), se procede a realizar un proceso de encoding para su posterior manipulacion. Se elimina la columna original a fin de evitar problemas de colinealidad.    
+
+```{r}
+data_set <- data_set %>% filter(satisfaction_level > 0.48) %>% filter(last_evaluation > 0.50)
+```
+
+* En la observacion de **satisfaction_level vs last_evaluation** se resolvio trabajar sobre la mayor concentracion de empleados que permanecen en la organización.    
+
+```{r}
+ggplot(data_set, 
+       aes(x = satisfaction_level, y = last_evaluation, color = as.factor(left))) + geom_point()
+```
+
+## 10,1.Matriz de correlación
+
+```{r Correlación}
+corrplot(cor(data_set), type="upper", method="pie")
+```
+
+* Aparentemente la variable left se encuentra principalmente relacionada con **satisfaction_level, last_evaluation, number_project, average_montly_hours y time_spend_company**.
+
+```{r}
+imcdiag(data_set, data_set$left)
+```
+* Se detectan variables con un alto valor de VIF, aquellas variables procedentes del proceso de encoding, aparentemente no aportan mucha relevancia al modelo y se decide excluirlas del mismo.    
+
+```{r}
+
+models <- regsubsets(left~., data = data_set, nvmax = 5)
+summary(models)
+plot(models)
+
+```
+
+* Se lleva a cabo una seleccion de variables donde se supone que las variables mas relevantes para el modelo son: **satisfaction_level. last_evaluation, number_project, average_montly_hours, time_spend_company, Work_accident**.    
+
+```{r}
+data_set_1 <- select(data_set, c("left", "satisfaction_level", "last_evaluation", "number_project", "average_montly_hours", "time_spend_company", "Work_accident"))
+
+dim(data_set_1)/dim(raw_data)
+```
+
+* Tras la limpieza de los datos, se recorto el dataset original en un **35%**.    
+
+
+## 10,2.Matriz de correlación
+
+```{r Correlación 3}
+corrplot(cor(data_set_1), type="upper", method="pie")
+```
+
+```{r}
+imcdiag(data_set_1, data_set_1$left)
+```
+* No se observan rastros de colinealidad, dado que el valor de VIF es cercado a 1.
+
+```{r Iteracion sobre modelo tree 2}
+results_tree <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_2 <- sample_frac(data_set_1, 0.7)
+   prop.table(table(data_train_2$left))
+  
+   data_test_2 <- setdiff(data_set_1, data_train_2)
+   prop.table(table(data_test_2$left))
+  
+   data_train_2$left <- factor(data_train_2$left)
+   data_test_2$left <- factor(data_test_2$left)
+   
+   tree_1 <- rpart(formula = left ~ ., data = data_train_2)
+   prediccion <- predict(tree_1, newdata = data_test_2, type = "class")
+   res_tree <- confusionMatrix(prediccion, data_test_2[["left"]])
+   
+   results_tree[i,] <- res_tree$overall["Accuracy"]
+}
+```
+
+```{r Iteracion sobre modelo Logistico 2}
+results_log <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_2 <- sample_frac(data_set_1, 0.7)
+   prop.table(table(data_train_2$left))
+  
+   data_test_2 <- setdiff(data_set_1, data_train_2)
+   prop.table(table(data_test_2$left))
+  
+   data_train_2$left <- factor(data_train_2$left)
+   data_test_2$left <- factor(data_test_2$left)
+   
+   glm.model <- glm(formula = left ~ ., data = data_train_2, family = "binomial")
+   lgm.predict <- round(predict(glm.model, data_test_2, type = "response"))
+   lgm.predict <- factor(lgm.predict)
+   res_lgm = confusionMatrix(lgm.predict, data_test_2$left) 
+   results_log[i,] <- res_lgm$overall["Accuracy"]
+}
+```
+
+```{r Iteracion sobre modelo Random Forest 2}
+results_rf <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_2 <- sample_frac(data_set_1, 0.7)
+   prop.table(table(data_train_2$left))
+  
+   data_test_2 <- setdiff(data_set_1, data_train_2)
+   prop.table(table(data_test_2$left))
+  
+   data_train_2$left <- factor(data_train_2$left)
+   data_test_2$left <- factor(data_test_2$left)
+   
+   rf.model <- randomForest(left~., data = data_train_2)
+   rf.prediction <- predict(rf.model, data_test_2, type = "class")
+   res_random = confusionMatrix(rf.prediction, data_test_2$left)
+   results_rf[i,] <- res_random$overall["Accuracy"]
+}
+```
+
+
+```{r Iteracion sobre modelo LDA 2}
+results_lda <- matrix(nrow=10,ncol=1)
+for (i in 1:10){
+  
+   data_train_2 <- sample_frac(data_set_1, 0.7)
+   prop.table(table(data_train_2$left))
+  
+   data_test_2 <- setdiff(data_set_1, data_train_2)
+   prop.table(table(data_test_2$left))
+  
+   data_train_2$left <- factor(data_train_2$left)
+   data_test_2$left <- factor(data_test_2$left)
+   
+   lda.model <- train(left ~., data = data_train_2, method = "lda")
+   lda.predict <- predict(lda.model, data_test_2)
+   res_lda = confusionMatrix(lda.predict, data_test_2$left)
+   
+   results_lda[i,] <- res_lda$overall["Accuracy"]
+}
+```
+
+## 10,3.Accuracy   
+
+| Arbol de Decision | Regresion Logistica | Random Forest | LDA |
+|:-:|:-:|:-:|:-:|
+|`r mean(results_tree)`|`r mean(results_log)`|`r mean(results_rf)`|`r mean(results_lda)`|
+
+**Tras la limpieza de datos y seleccion de variables se obtuvieron valores aceptables de accuracy**. Sin embargo deben evaluarse los modelos en forma individual para seleccionar el modelo mas adecuado.    
